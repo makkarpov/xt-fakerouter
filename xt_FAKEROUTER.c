@@ -33,7 +33,7 @@ static void send_ttl_exceeded(struct net *net, struct sk_buff *oldskb, struct in
 	struct dst_entry *dst = NULL;
 	struct flowi6 fl6;
 	
-	max_reply_sz = oldskb->dev->mtu - oldskb->len - (sizeof(struct ipv6hdr) + sizeof(struct icmp6hdr));
+	max_reply_sz = oldskb->dev->mtu - sizeof(struct ipv6hdr) - sizeof(struct icmp6hdr);
 	reply_sz = oldskb->len;
 	
 	if (reply_sz > max_reply_sz) {
