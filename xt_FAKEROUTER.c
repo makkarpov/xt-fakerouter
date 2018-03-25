@@ -47,8 +47,7 @@ static void send_ttl_exceeded(struct net *net, struct sk_buff *oldskb, struct in
 	fl6.flowi6_proto = IPPROTO_ICMP;
 	fl6.saddr = *src_addr;
 	fl6.daddr = ipv6_hdr(oldskb)->saddr;
-	fl6.flowi6_oif = l3mdev_master_ifindex(skb_dst(oldskb)->dev);
-	fl6.flowi6_mark = IP6_REPLY_MARK(net, oldskb->mark);
+	fl6.flowi6_oif = oldskb->dev->ifindex;
 	security_skb_classify_flow(oldskb, flowi6_to_flowi(&fl6));
 	dst = ip6_route_output(net, NULL, &fl6);
 	
@@ -98,7 +97,7 @@ static void send_ttl_exceeded(struct net *net, struct sk_buff *oldskb, struct in
 //	print_hex_dump(KERN_INFO, "FAKEROUTER: ", DUMP_PREFIX_OFFSET, 16, 1, nskb->data, nskb->len, 1);
 	
 	nf_ct_attach(nskb, oldskb);
-	ip6_local_out(net, nskb->sk, nskb);
+	ip6_local_out(nskb);
 }
 
 static unsigned int
@@ -112,7 +111,7 @@ fakert_tg(struct sk_buff *skb, const struct xt_action_param *par)
 	if (ip6h->hop_limit < rtinfo->router_count + 1) {
 		struct in6_addr src_addr = ip6h->daddr;
 		src_addr.s6_addr16[7] = htons(ip6h->hop_limit);
-		send_ttl_exceeded(xt_net(par), skb, &src_addr);
+		send_ttl_exceeded(dev_net(skb->dev), skb, &src_addr);
 		return NF_DROP;
 	}
 	
